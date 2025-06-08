@@ -556,11 +556,7 @@ BST:O(n)
 ## 測試與驗證
 
 ### 測試案例
-MAXHEAP
-![image](https://github.com/user-attachments/assets/171d3cc9-f371-44a8-8617-2b6e0f0c3001)
-
-MINHEAP
-![image](https://github.com/user-attachments/assets/2eb7fb8d-1427-4301-9850-81d26175ea32)
+![image](https://github.com/user-attachments/assets/f5bdbfad-bfd8-414a-9045-2042df41eccf)
 
 ## 申論及開發報告
 
