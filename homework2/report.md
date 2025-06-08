@@ -5,8 +5,7 @@
 
 ## 解題說明
 
-實作四種排序法，包括 Insertion Sort、Quick Sort、Merge Sort、Heap Sort。
-每種排序法需有排序前、排序後的資料，且使用者可自行插入數字後再次排序。
+題目要求實作兩個 C++ 類別：一個是MinPQ，定義了最小優先權佇列的基本操作；另一個是從 MinPQ 派生的 MinHeap 類別，實現了所有 MinPQ 函數。需要確保 MinHeap 中的每個函數的時間複雜度與對應的 MaxHeap 相同。這樣才可以保證 MinHeap 的效率與 MaxHeap 相當。
 
 ### 解題策略
 
