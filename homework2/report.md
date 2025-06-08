@@ -656,15 +656,16 @@ int main() {
 ## 效能分析
 
 時間複雜度：
-BST:若資料為亂數插入為平均 O(logn) 若資料為升序或降序插入，BST 退化為鏈表，效率最差為 O(n)
+O(1)
 空間複雜度：
-BST:O(n)
+O(1)
 
 ## 測試與驗證
 
 ### 測試案例
-![image](https://github.com/user-attachments/assets/f5bdbfad-bfd8-414a-9045-2042df41eccf)
-![output](https://github.com/user-attachments/assets/6b80fb61-42ae-4cf9-8937-6da635b5f5d0)
+![image](https://github.com/user-attachments/assets/ddd1a1e7-779c-412e-8061-4ad547a7976b)
+![output (1)](https://github.com/user-attachments/assets/f0b78c16-4bbf-4e55-92e2-4895b8e44d92)
+
 
 ## 申論及開發報告
 
