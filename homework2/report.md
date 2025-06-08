@@ -579,3 +579,249 @@ BST:O(n)
 ## 1. BST
 
 使用指標串接的二元樹結構，每個節點皆含有 key-value 配對，並遵守「左小右大」的排序原則。插入新節點時，依照 key 遞迴或迴圈判斷插入位置；刪除節點時，依據其子樹數量進行相應處理（包含替換前驅節點）。
+
+# 第三題
+
+## 解題說明
+
+模擬隨機插入值到一個初始為空的二元搜索樹中，然後測量樹的高度並將其除以 log2n。需要對 n = 100、500、1000、2000、3000、10,000 執行此操作，然後繪製函數圖表。最後，驗證比率是否大約為 2。
+
+### 解題策略
+
+Binary Search Tree 採用二元樹結構，並遵循「左子節點小於父節點、右子節點大於父節點」的原則插入元素。
+針對不同的節點數 n（如 100、500、1000...10000）隨機插入資料，並在插入完成後計算整棵 BST 的高度，再與 log₂(n) 相除，觀察其比值是否接近常數。
+
+## 程式實作
+
+BST 程式碼：
+
+```cpp
+#include <iostream>
+#include <utility>
+#include <stack>
+#include <random>
+#include <cmath>
+#include <iomanip>
+using namespace std;
+
+template <class K, class E>
+class Dictionary {
+public:
+	virtual bool IsEmpty() const = 0;
+	virtual pair<K, E>* Get(const K&) = 0;
+	virtual void Insert(const pair<K, E>&) = 0;
+	virtual void Delete(const K&) = 0;
+};
+
+template <class K, class E>
+class BST : public Dictionary<K, E> {
+private:
+	struct TreeNode {
+		pair<K, E> data;
+		TreeNode* leftChild;
+		TreeNode* rightChild;
+		int leftSize;
+		TreeNode(const pair<K, E>& thePair)
+			: data(thePair), leftChild(nullptr), rightChild(nullptr), leftSize(0) {
+		}
+	};
+
+	TreeNode* root;
+	pair<K, E>* Get(TreeNode*, const K&) const;
+	void Insert(TreeNode*&, const pair<K, E>&);
+	int calculateHeight(TreeNode* root) const;
+	TreeNode* Delete(TreeNode*&, const K&, bool& deletedLeft);
+
+public:
+	BST() : root(nullptr) {}
+	~BST();
+	bool IsEmpty() const { return root == nullptr; }
+	pair<K, E>* Get(const K&);
+	pair<K, E>* RankGet(int);
+	void Insert(const pair<K, E>&);
+	void Delete(const K&);
+	int Height() const { return calculateHeight(root); }
+	int Size(TreeNode*) const;
+	TreeNode* GetRoot() const { return root; }
+};
+
+template <class K, class E>
+BST<K, E>::~BST() {
+	stack<TreeNode*> s;
+	TreeNode* current = root;
+	while (current || !s.empty()) {
+		while (current) {
+			s.push(current);
+			current = current->leftChild;
+		}
+		current = s.top(); s.pop();
+		TreeNode* temp = current;
+		current = current->rightChild;
+		delete temp;
+	}
+}
+
+template <class K, class E>
+pair<K, E>* BST<K, E>::Get(const K& k) {
+	return Get(root, k);
+}
+
+template <class K, class E>
+pair<K, E>* BST<K, E>::Get(TreeNode* p, const K& k) const {
+	if (!p) return nullptr;
+	if (k < p->data.first) return Get(p->leftChild, k);
+	if (k > p->data.first) return Get(p->rightChild, k);
+	return &p->data;
+}
+
+template <class K, class E>
+pair<K, E>* BST<K, E>::RankGet(int r) {
+	TreeNode* currentNode = root;
+	while (currentNode) {
+		if (r < currentNode->leftSize) {
+			currentNode = currentNode->leftChild;
+		}
+		else if (r > currentNode->leftSize) {
+			r -= currentNode->leftSize + 1;
+			currentNode = currentNode->rightChild;
+		}
+		else {
+			return &(currentNode->data);
+		}
+	}
+	return nullptr;
+}
+
+template <class K, class E>
+void BST<K, E>::Insert(const pair<K, E>& thePair) {
+	TreeNode* p = root;
+	TreeNode* pp = nullptr;
+	while (p) {
+		pp = p;
+		if (thePair.first < p->data.first) {
+			p->leftSize++;
+			p = p->leftChild;
+		}
+		else if (thePair.first > p->data.first) {
+			p = p->rightChild;
+		}
+		else {
+			p->data.second = thePair.second;
+			return;
+		}
+	}
+	TreeNode* newNode = new TreeNode(thePair);
+	if (!root) root = newNode;
+	else if (thePair.first < pp->data.first) pp->leftChild = newNode;
+	else pp->rightChild = newNode;
+}
+
+template <class K, class E>
+void BST<K, E>::Delete(const K& k) {
+	bool deletedLeft = false;
+	root = Delete(root, k, deletedLeft);
+}
+
+template <class K, class E>
+typename BST<K, E>::TreeNode* BST<K, E>::Delete(TreeNode*& node, const K& k, bool& deletedLeft) {
+	if (!node) return nullptr;
+
+	if (k < node->data.first) {
+		node->leftChild = Delete(node->leftChild, k, deletedLeft);
+		if (deletedLeft) node->leftSize--;
+	}
+	else if (k > node->data.first) {
+		node->rightChild = Delete(node->rightChild, k, deletedLeft);
+	}
+	else {
+		deletedLeft = true;
+		if (!node->leftChild) {
+			TreeNode* temp = node->rightChild;
+			delete node;
+			return temp;
+		}
+		else if (!node->rightChild) {
+			TreeNode* temp = node->leftChild;
+			delete node;
+			return temp;
+		}
+		else {
+			TreeNode* s = node->leftChild;
+			TreeNode* sp = node;
+			while (s->rightChild) {
+				sp = s;
+				s = s->rightChild;
+			}
+			node->data = s->data;
+			bool dummy = false;
+			node->leftChild = Delete(node->leftChild, s->data.first, dummy);
+			node->leftSize--;
+		}
+	}
+	return node;
+}
+
+template <class K, class E>
+int BST<K, E>::Size(TreeNode* node) const {
+	if (!node) return 0;
+	return Size(node->leftChild) + Size(node->rightChild) + 1;
+}
+
+template <class K, class E>
+int BST<K, E>::calculateHeight(TreeNode* root) const {
+	if (!root) return 0;
+	int leftHeight = calculateHeight(root->leftChild);
+	int rightHeight = calculateHeight(root->rightChild);
+	return max(leftHeight, rightHeight) + 1;
+}
+
+int main() {
+	const int testSizes[] = { 100, 500, 1000, 2000, 3000, 4000, 5000, 10000 };
+	const int numTests = sizeof(testSizes) / sizeof(testSizes[0]);
+
+	random_device rd;
+	mt19937 gen(rd());
+	uniform_int_distribution<int> dist(1, 1000000);
+
+	cout << left << setw(10) << "n" << setw(15) << "height" << setw(20) << "log2(n)" << setw(20) << "height / log2(n)" << endl;
+	cout << fixed << setprecision(4);
+
+	for (int i = 0; i < numTests; ++i) {
+		int n = testSizes[i];
+		BST<int, int> bst;
+		for (int j = 0; j < n; ++j) {
+			int key = dist(gen);
+			bst.Insert(make_pair(key, 0));
+		}
+		int height = bst.Height();
+		double log2n = log2(n);
+		double ratio = height / log2n;
+		cout << setw(10) << n << setw(15) << height << setw(20) << log2n << setw(20) << ratio << endl;
+	}
+
+	return 0;
+}
+```
+
+## 效能分析
+
+時間複雜度：
+BST:若資料為亂數插入為平均 O(logn) 若資料為升序或降序插入，BST 退化為鏈表，效率最差為 O(n)
+空間複雜度：
+BST:O(n)
+
+## 測試與驗證
+
+### 測試案例
+![image](https://github.com/user-attachments/assets/f5bdbfad-bfd8-414a-9045-2042df41eccf)
+![output](https://github.com/user-attachments/assets/6b80fb61-42ae-4cf9-8937-6da635b5f5d0)
+
+## 申論及開發報告
+
+本題實作一種樹狀資料結構：Binary Search Tree（BST），為常見的查找與排序結構，可應用於搜尋、排名查找、動態資料集維護等場景
+
+---
+
+## 1. BST
+
+使用指標串接的二元樹結構，每個節點皆含有 key-value 配對，並遵守「左小右大」的排序原則。插入新節點時，依照 key 遞迴或迴圈判斷插入位置；刪除節點時，依據其子樹數量進行相應處理（包含替換前驅節點）。
