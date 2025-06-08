@@ -584,223 +584,73 @@ BST:O(n)
 
 ## 解題說明
 
-模擬隨機插入值到一個初始為空的二元搜索樹中，然後測量樹的高度並將其除以 log2n。需要對 n = 100、500、1000、2000、3000、10,000 執行此操作，然後繪製函數圖表。最後，驗證比率是否大約為 2。
+本題探討外部排序（External Sorting）第二階段（Phase Two）中使用 k-way merge 時的輸入時間 t_input 隨 k 變化的情形。
+根據模型，t_input = n × t_t + log_k(m) × m × (t_s + t_l)，其中包括了資料讀取時間與 merge pass 中硬碟 seek/latency 的累積時間。
+
+透過給定參數 n = 200000、m = 64、t_s = 80ms、t_l = 20ms、t_t = 1ms，我們針對不同的 k 值（2~64）計算 t_input，並觀察它與 CPU 執行時間 t_CPU = 5 秒 的差距。最後將 t_input 與 k 繪製成圖表，視覺化比較。
 
 ### 解題策略
 
-Binary Search Tree 採用二元樹結構，並遵循「左子節點小於父節點、右子節點大於父節點」的原則插入元素。
-針對不同的節點數 n（如 100、500、1000...10000）隨機插入資料，並在插入完成後計算整棵 BST 的高度，再與 log₂(n) 相除，觀察其比值是否接近常數。
+設定公式參數：記錄數 n、初始 run 數 m、傳輸、搜尋與延遲時間。
+
+針對 k = 2, 4, 8, 16, 32, 64，計算：
+
+merge 次數 ceil(log_k(m))
+
+輸入時間 t_input
+
+與 t_CPU 的差值 |t_CPU - t_input|
+
+印出每組 k 對應的 t_input 與差值。
+
+找出最接近 t_CPU 的 k 值。
+
+最後，將 k 對應的 t_input 與 |t_CPU - t_input| 繪圖，觀察趨勢與最佳點。
 
 ## 程式實作
 
-BST 程式碼：
+程式碼：
 
 ```cpp
 #include <iostream>
-#include <utility>
-#include <stack>
-#include <random>
 #include <cmath>
 #include <iomanip>
+#include <limits>
 using namespace std;
 
-template <class K, class E>
-class Dictionary {
-public:
-	virtual bool IsEmpty() const = 0;
-	virtual pair<K, E>* Get(const K&) = 0;
-	virtual void Insert(const pair<K, E>&) = 0;
-	virtual void Delete(const K&) = 0;
-};
-
-template <class K, class E>
-class BST : public Dictionary<K, E> {
-private:
-	struct TreeNode {
-		pair<K, E> data;
-		TreeNode* leftChild;
-		TreeNode* rightChild;
-		int leftSize;
-		TreeNode(const pair<K, E>& thePair)
-			: data(thePair), leftChild(nullptr), rightChild(nullptr), leftSize(0) {
-		}
-	};
-
-	TreeNode* root;
-	pair<K, E>* Get(TreeNode*, const K&) const;
-	void Insert(TreeNode*&, const pair<K, E>&);
-	int calculateHeight(TreeNode* root) const;
-	TreeNode* Delete(TreeNode*&, const K&, bool& deletedLeft);
-
-public:
-	BST() : root(nullptr) {}
-	~BST();
-	bool IsEmpty() const { return root == nullptr; }
-	pair<K, E>* Get(const K&);
-	pair<K, E>* RankGet(int);
-	void Insert(const pair<K, E>&);
-	void Delete(const K&);
-	int Height() const { return calculateHeight(root); }
-	int Size(TreeNode*) const;
-	TreeNode* GetRoot() const { return root; }
-};
-
-template <class K, class E>
-BST<K, E>::~BST() {
-	stack<TreeNode*> s;
-	TreeNode* current = root;
-	while (current || !s.empty()) {
-		while (current) {
-			s.push(current);
-			current = current->leftChild;
-		}
-		current = s.top(); s.pop();
-		TreeNode* temp = current;
-		current = current->rightChild;
-		delete temp;
-	}
-}
-
-template <class K, class E>
-pair<K, E>* BST<K, E>::Get(const K& k) {
-	return Get(root, k);
-}
-
-template <class K, class E>
-pair<K, E>* BST<K, E>::Get(TreeNode* p, const K& k) const {
-	if (!p) return nullptr;
-	if (k < p->data.first) return Get(p->leftChild, k);
-	if (k > p->data.first) return Get(p->rightChild, k);
-	return &p->data;
-}
-
-template <class K, class E>
-pair<K, E>* BST<K, E>::RankGet(int r) {
-	TreeNode* currentNode = root;
-	while (currentNode) {
-		if (r < currentNode->leftSize) {
-			currentNode = currentNode->leftChild;
-		}
-		else if (r > currentNode->leftSize) {
-			r -= currentNode->leftSize + 1;
-			currentNode = currentNode->rightChild;
-		}
-		else {
-			return &(currentNode->data);
-		}
-	}
-	return nullptr;
-}
-
-template <class K, class E>
-void BST<K, E>::Insert(const pair<K, E>& thePair) {
-	TreeNode* p = root;
-	TreeNode* pp = nullptr;
-	while (p) {
-		pp = p;
-		if (thePair.first < p->data.first) {
-			p->leftSize++;
-			p = p->leftChild;
-		}
-		else if (thePair.first > p->data.first) {
-			p = p->rightChild;
-		}
-		else {
-			p->data.second = thePair.second;
-			return;
-		}
-	}
-	TreeNode* newNode = new TreeNode(thePair);
-	if (!root) root = newNode;
-	else if (thePair.first < pp->data.first) pp->leftChild = newNode;
-	else pp->rightChild = newNode;
-}
-
-template <class K, class E>
-void BST<K, E>::Delete(const K& k) {
-	bool deletedLeft = false;
-	root = Delete(root, k, deletedLeft);
-}
-
-template <class K, class E>
-typename BST<K, E>::TreeNode* BST<K, E>::Delete(TreeNode*& node, const K& k, bool& deletedLeft) {
-	if (!node) return nullptr;
-
-	if (k < node->data.first) {
-		node->leftChild = Delete(node->leftChild, k, deletedLeft);
-		if (deletedLeft) node->leftSize--;
-	}
-	else if (k > node->data.first) {
-		node->rightChild = Delete(node->rightChild, k, deletedLeft);
-	}
-	else {
-		deletedLeft = true;
-		if (!node->leftChild) {
-			TreeNode* temp = node->rightChild;
-			delete node;
-			return temp;
-		}
-		else if (!node->rightChild) {
-			TreeNode* temp = node->leftChild;
-			delete node;
-			return temp;
-		}
-		else {
-			TreeNode* s = node->leftChild;
-			TreeNode* sp = node;
-			while (s->rightChild) {
-				sp = s;
-				s = s->rightChild;
-			}
-			node->data = s->data;
-			bool dummy = false;
-			node->leftChild = Delete(node->leftChild, s->data.first, dummy);
-			node->leftSize--;
-		}
-	}
-	return node;
-}
-
-template <class K, class E>
-int BST<K, E>::Size(TreeNode* node) const {
-	if (!node) return 0;
-	return Size(node->leftChild) + Size(node->rightChild) + 1;
-}
-
-template <class K, class E>
-int BST<K, E>::calculateHeight(TreeNode* root) const {
-	if (!root) return 0;
-	int leftHeight = calculateHeight(root->leftChild);
-	int rightHeight = calculateHeight(root->rightChild);
-	return max(leftHeight, rightHeight) + 1;
+double compute_input_time(int n, int k, int m, double t_s, double t_l, double t_t) {
+    double read_time = n * t_t;
+    int merge_passes = ceil(log(m) / log(k));
+    double overhead_time = merge_passes * m * (t_s + t_l);
+    return read_time + overhead_time;
 }
 
 int main() {
-	const int testSizes[] = { 100, 500, 1000, 2000, 3000, 4000, 5000, 10000 };
-	const int numTests = sizeof(testSizes) / sizeof(testSizes[0]);
+    const int n = 200000;
+    const int m = 64;
+    const double t_s = 0.08;
+    const double t_l = 0.02;
+    const double t_t = 0.001;
+    const double t_CPU = 5.0;
 
-	random_device rd;
-	mt19937 gen(rd());
-	uniform_int_distribution<int> dist(1, 1000000);
+    cout << left << setw(6) << "k"
+        << setw(12) << "t_input"
+        << setw(20) << "|t_CPU - t_input|" << endl;
 
-	cout << left << setw(10) << "n" << setw(15) << "height" << setw(20) << "log2(n)" << setw(20) << "height / log2(n)" << endl;
-	cout << fixed << setprecision(4);
+    cout << fixed << setprecision(3);
 
-	for (int i = 0; i < numTests; ++i) {
-		int n = testSizes[i];
-		BST<int, int> bst;
-		for (int j = 0; j < n; ++j) {
-			int key = dist(gen);
-			bst.Insert(make_pair(key, 0));
-		}
-		int height = bst.Height();
-		double log2n = log2(n);
-		double ratio = height / log2n;
-		cout << setw(10) << n << setw(15) << height << setw(20) << log2n << setw(20) << ratio << endl;
-	}
+    for (int k = 2; k <= 64; k *= 2) {
+        double t_input = compute_input_time(n, k, m, t_s, t_l, t_t);
+        double diff = fabs(t_CPU - t_input);
 
-	return 0;
+        cout << setw(6) << k
+            << setw(12) << t_input
+            << setw(20) << diff << endl;
+    }
+
+    return 0;
 }
+
 ```
 
 ## 效能分析
