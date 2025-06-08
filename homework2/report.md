@@ -549,12 +549,9 @@ int main() {
 ## 效能分析
 
 時間複雜度：
-MAXHEAP：O(nlogn)
-MINHEAP：O(nlogn)
+BST:若資料為亂數插入為平均 O(logn) 若資料為升序或降序插入，BST 退化為鏈表，效率最差為 O(n)
 空間複雜度：
-MAXHEAP：O(n)
-MINHEAP：O(n)
-
+BST:O(n)
 
 ## 測試與驗證
 
