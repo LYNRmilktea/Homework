@@ -308,32 +308,21 @@ MINHEAP
 
 ## 申論及開發報告
 
-本次作業實作四種常見排序法：Insertion Sort、Quick Sort、Merge Sort、Heap Sort。
+本題實作二種堆積結構：MaxHeap 與 MinHeap，皆為優先佇列常見應用之一，並可作為 Heap Sort 的基礎。
 
 ---
 
-## 1. Insertion Sort
+## 1. MAXHEAP
 
-使用陣列（Array）作為資料結構，透過依序插入元素的方式模擬手動排序的過程。  
-Insertion Sort 在資料量小或資料接近有序時特別有效，結構簡單，適合基本排序操作。
-
----
-
-## 2. Quick Sort
-
-採用分治法（Divide and Conquer）策略與遞迴（Recursion）實作，利用樞紐（pivot）分割陣列並遞迴排序。  
-Quick Sort 平均時間複雜度為 O(n log n)，排序速度快。
+使用陣列作為二元堆的儲存結構，並以「最大堆」邏輯維護：父節點必大於或等於子節點。插入時會使用上浮，刪除堆頂時會使用下沉來維持堆序性。
+MaxHeap 適合用於即時追蹤最大值的應用場景，如排行榜或最大資源指派問題。
+整體時間複雜度為 O(nlogn)，空間複雜度為 O(n)。
 
 ---
 
-## 3. Merge Sort
+## 2. MINHEAP
 
-透過遞迴與分治，將資料分成兩半排序後合併，使用額外 O(n) 空間儲存暫存資料。  
-Merge Sort 穩定且時間複雜度固定為 O(n log n)，適合資料量大且需要穩定排序的情況。
+邏輯上與 MaxHeap 相似，但調整為「最小堆」：父節點小於或等於子節點。其插入與刪除操作也分別使用上浮與下沉邏輯。
+MinHeap 常用於任務排程、Dijkstra 最短路徑等需要即時取得最小元素的場景。
+同樣具備 O(nlogn) 的排序效率與 O(n) 的空間使用特性。
 
----
-
-## 4. Heap Sort
-
-用陣列建構最大堆（Max Heap）結構，反覆將最大元素取出並重新堆化（heapify）完成排序。  
-Heap Sort 是原地排序法，空間複雜度低，適合需要節省空間且資料量大的場合。
