@@ -557,6 +557,7 @@ BST:O(n)
 
 ### 測試案例
 ![image](https://github.com/user-attachments/assets/f5bdbfad-bfd8-414a-9045-2042df41eccf)
+![output](https://github.com/user-attachments/assets/6b80fb61-42ae-4cf9-8937-6da635b5f5d0)
 
 ## 申論及開發報告
 
