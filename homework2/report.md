@@ -298,18 +298,11 @@ MINHEAP：O(n)
 ## 測試與驗證
 
 ### 測試案例
-Insertion Sort
-![image](https://github.com/user-attachments/assets/0454707b-b1a6-4d5b-90c2-25c72b56c87a)
+MAXHEAP
+![image](https://github.com/user-attachments/assets/171d3cc9-f371-44a8-8617-2b6e0f0c3001)
 
-Quick Sort
-![image](https://github.com/user-attachments/assets/e201728d-3a99-4c63-9ffb-9e11a332ac7d)
-
-Merge Sort
-![image](https://github.com/user-attachments/assets/6cbc5865-de97-4384-b50b-37debb366b1a)
-
-Heap Sort
-![image](https://github.com/user-attachments/assets/3f18782a-afa1-48a2-8e50-40a2c51e22dd)
-
+MINHEAP
+![image](https://github.com/user-attachments/assets/2eb7fb8d-1427-4301-9850-81d26175ea32)
 
 ## 申論及開發報告
 
