@@ -7,334 +7,279 @@
 
 題目要求實作兩個 C++ 類別：一個是MinPQ，定義了最小優先權佇列的基本操作；另一個是從 MinPQ 派生的 MinHeap 類別，實現了所有 MinPQ 函數。需要確保 MinHeap 中的每個函數的時間複雜度與對應的 MaxHeap 相同。這樣才可以保證 MinHeap 的效率與 MaxHeap 相當。
 
-### 解題策略
-
-1.	Insertion Sort(插入排序)：一個元素從未排序的部分找到適當的位置，並插入到已排序的部分，直到所有元素都完成排序。
-2.	Quick Sort(快速排序)：數列分割成左右兩部分，左部分的元素小於等於基準元素，右部分的元素大於等於基準元素，然後對每個子部分再進行同樣的操作。
-3.	Merge Sort(合併排序)：將數列分割成兩個子數列，對每個子數列遞迴地進行排序，然後將兩個排序好的子數列合併起來。	
-4.	Heap Sort(堆積排序)：將數列轉換成最大堆，然後反覆從頂部取出最大元素，並將堆的大小減少，直到排序完成。
 
 ## 程式實作
 
-Insertion Sort 程式碼：
+MAXHEAP 程式碼：
 
 ```cpp
 #include <iostream>
-#include <vector>
-#include <random>
+#include <stdexcept>
+#include <algorithm>
 using namespace std;
 
-void insertionSort(vector<int>& arr) {
-    size_t n = arr.size();
-    for (size_t i = 1; i < n; ++i) {
-        int key = arr[i];
-        int j = i - 1;
-        while (j >= 0 && arr[j] > key) {
-            arr[j + 1] = arr[j];
-            j = j - 1;
-        }
-        arr[j + 1] = key;
+int min(int a, int b) {
+    return (a < b) ? a : b;
+}
+
+template <class T>
+class MaxPQ {
+public:
+    virtual ~MaxPQ() {}
+    virtual bool IsEmpty() const = 0;
+    virtual const T& Top() const = 0;
+    virtual void Push(const T& x) = 0;
+    virtual void Pop() = 0;
+};
+
+template <class T>
+class MaxHeap : public MaxPQ<T> {
+private:
+    T* heap;
+    int heapSize;
+    int capacity;
+
+public:
+    MaxHeap(int theCapacity = 10);
+    ~MaxHeap();
+    void Push(const T& e);
+    void Pop();
+    const T& Top() const;
+    bool IsEmpty() const { return heapSize == 0; }
+    int Size() const { return heapSize; }
+    void PrintHeap() const;
+};
+
+template <class T>
+void ChangeSize1D(T*& a, int oldSize, int newSize) {
+    if (newSize < 0) throw runtime_error("New length must be >= 0");
+    T* temp = new T[newSize + 1];
+    int number = min(oldSize, newSize);
+    copy(a, a + number + 1, temp);
+    delete[] a;
+    a = temp;
+}
+
+template <class T>
+MaxHeap<T>::MaxHeap(int theCapacity) {
+    if (theCapacity < 1) throw runtime_error("Capacity must be >= 1");
+    capacity = theCapacity;
+    heapSize = 0;
+    heap = new T[capacity + 1];
+}
+
+template <class T>
+MaxHeap<T>::~MaxHeap() {
+    delete[] heap;
+}
+
+template <class T>
+void MaxHeap<T>::Push(const T& e) {
+    if (heapSize == capacity) {
+        ChangeSize1D(heap, capacity, 2 * capacity);
+        capacity *= 2;
     }
+    int currentNode = ++heapSize;
+    while (currentNode != 1 && heap[currentNode / 2] < e) {
+        heap[currentNode] = heap[currentNode / 2];
+        currentNode /= 2;
+    }
+    heap[currentNode] = e;
+}
+
+template <class T>
+void MaxHeap<T>::Pop() {
+    if (IsEmpty()) throw runtime_error("Heap is empty. Cannot delete");
+    T lastE = heap[heapSize--];
+    int currentNode = 1;
+    int child = 2;
+    while (child <= heapSize) {
+        if (child < heapSize && heap[child] < heap[child + 1]) child++;
+        if (lastE >= heap[child]) break;
+        heap[currentNode] = heap[child];
+        currentNode = child;
+        child *= 2;
+    }
+    heap[currentNode] = lastE;
+}
+
+template <class T>
+const T& MaxHeap<T>::Top() const {
+    if (IsEmpty()) throw runtime_error("Heap is empty. No top element");
+    return heap[1];
+}
+
+template <class T>
+void MaxHeap<T>::PrintHeap() const {
+    for (int i = 1; i <= heapSize; ++i)
+        cout << heap[i] << " ";
+    cout << endl;
 }
 
 int main() {
-    vector<int> arr;
-    vector<int> originalArr;
-    int numCount;
-    cout << "請輸入陣列大小:";
-    cin >> numCount;
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(1, 100);
-    for (int i = 0; i < numCount; i++) {
-        int num = dis(gen);
-        arr.push_back(num);
-        originalArr.push_back(num);
-    }
+    MaxHeap<int> maxHeap(10);
+    maxHeap.Push(100);
+    maxHeap.Push(70);
+    maxHeap.Push(80);
+    maxHeap.Push(20);
+    maxHeap.Push(30);
+    maxHeap.Push(20);
+    maxHeap.Push(50);
 
-    cout << "未排序前: ";
-    for (int num : originalArr) {
-        cout << num << " ";
-    }
-
-    insertionSort(arr);
-
-    cout << "\n排序後: ";
-    for (int num : arr) {
-        cout << num << " ";
-    }
-    int n;
-    cout << "\n請輸入要插入的數字: ";
-    cin >> n;
-    arr.push_back(n);
-    insertionSort(arr);
-    cout << "排序後: ";
-    for (int num : arr) {
-        cout << num << " ";
+    cout << "Pop and print in order:" << endl;
+    while (!maxHeap.IsEmpty()) {
+        cout << maxHeap.Top() << " ";
+        maxHeap.Pop();
     }
     cout << endl;
+
+
+    maxHeap.Push(100);
+    maxHeap.Push(70);
+    maxHeap.Push(80);
+    maxHeap.Push(20);
+    maxHeap.Push(30);
+    maxHeap.Push(20);
+    maxHeap.Push(50);
+
+    cout << "Printheap Memory for debug:" << endl;
+    maxHeap.PrintHeap();
     return 0;
 }
 ```
-Quick Sort 程式碼:
+MINHEAP 程式碼:
 
 ```cpp
 #include <iostream>
-#include <vector>
-#include <random>
+#include <stdexcept>
+#include <algorithm>
 using namespace std;
 
-int partition(vector<int>& arr, int low, int high) {
-    int pivot = arr[high];
-    int i = low - 1;
-    for (int j = low; j < high; ++j) {
-        if (arr[j] < pivot) {
-            ++i;
-            swap(arr[i], arr[j]);
-        }
-    }
-    swap(arr[i + 1], arr[high]);
-    return i + 1;
+int min(int a, int b) {
+    return (a < b) ? a : b;
 }
 
-void quickSort(vector<int>& arr, int low, int high) {
-    if (low < high) {
-        int pi = partition(arr, low, high);
-        quickSort(arr, low, pi - 1);
-        quickSort(arr, pi + 1, high);
+template <class T>
+class MinPQ {
+public:
+    virtual ~MinPQ() {}
+    virtual bool IsEmpty() const = 0;
+    virtual const T& Top() const = 0;
+    virtual void Push(const T& x) = 0;
+    virtual void Pop() = 0;
+};
+
+template <class T>
+class MinHeap : public MinPQ<T> {
+private:
+    T* heap;
+    int heapSize;
+    int capacity;
+
+public:
+    MinHeap(int theCapacity = 10);
+    ~MinHeap();
+    void Push(const T& e);
+    void Pop();
+    const T& Top() const;
+    bool IsEmpty() const { return heapSize == 0; }
+    int Size() const { return heapSize; }
+    void PrintHeap() const;
+};
+
+template <class T>
+void ChangeSize1D(T*& a, int oldSize, int newSize) {
+    if (newSize < 0) throw runtime_error("New length must be >= 0");
+    T* temp = new T[newSize + 1];
+    int number = min(oldSize, newSize);
+    copy(a, a + number + 1, temp);
+    delete[] a;
+    a = temp;
+}
+
+template <class T>
+MinHeap<T>::MinHeap(int theCapacity) {
+    if (theCapacity < 1) throw runtime_error("Capacity must be >= 1");
+    capacity = theCapacity;
+    heapSize = 0;
+    heap = new T[capacity + 1];
+}
+
+template <class T>
+MinHeap<T>::~MinHeap() {
+    delete[] heap;
+}
+
+template <class T>
+void MinHeap<T>::Push(const T& e) {
+    if (heapSize == capacity) {
+        ChangeSize1D(heap, capacity, 2 * capacity);
+        capacity *= 2;
     }
+    int currentNode = ++heapSize;
+    while (currentNode != 1 && heap[currentNode / 2] > e) {
+        heap[currentNode] = heap[currentNode / 2];
+        currentNode /= 2;
+    }
+    heap[currentNode] = e;
+}
+
+template <class T>
+void MinHeap<T>::Pop() {
+    if (IsEmpty()) throw runtime_error("Heap is empty. Cannot delete");
+    T lastE = heap[heapSize--];
+    int currentNode = 1;
+    int child = 2;
+    while (child <= heapSize) {
+        if (child < heapSize && heap[child] > heap[child + 1]) child++;
+        if (lastE <= heap[child]) break;
+        heap[currentNode] = heap[child];
+        currentNode = child;
+        child *= 2;
+    }
+    heap[currentNode] = lastE;
+}
+
+template <class T>
+const T& MinHeap<T>::Top() const {
+    if (IsEmpty()) throw runtime_error("Heap is empty. No top element");
+    return heap[1];
+}
+
+template <class T>
+void MinHeap<T>::PrintHeap() const {
+    for (int i = 1; i <= heapSize; ++i)
+        cout << heap[i] << " ";
+    cout << endl;
 }
 
 int main() {
-    vector<int> arr;
-    vector<int> originalArr;
-    int numCount;
+    MinHeap<int> minHeap(10);
+    minHeap.Push(10);
+    minHeap.Push(14);
+    minHeap.Push(17);
+    minHeap.Push(20);
+    minHeap.Push(30);
+    minHeap.Push(21);
+    minHeap.Push(44);
 
-    cout << "請輸入陣列大小: ";
-    cin >> numCount;
-
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(1, 100);
-
-    for (int i = 0; i < numCount; i++) {
-        int num = dis(gen);
-        arr.push_back(num);
-        originalArr.push_back(num);
+    cout << "Pop and print in order:" << endl;
+    while (!minHeap.IsEmpty()) {
+        cout << minHeap.Top() << " ";
+        minHeap.Pop();
     }
 
-    cout << "未排序前: ";
-    for (int num : originalArr) {
-        cout << num << " ";
-    }
 
-    quickSort(arr, 0, arr.size() - 1);
+    minHeap.Push(10);
+    minHeap.Push(14);
+    minHeap.Push(17);
+    minHeap.Push(20);
+    minHeap.Push(30);
+    minHeap.Push(21);
+    minHeap.Push(44);
 
-    cout << "\n排序後: ";
-    for (int num : arr) {
-        cout << num << " ";
-    }
-    cout << endl;
-
-    int newNum;
-    cout << "請輸入要插入的數字: ";
-    cin >> newNum;
-
-    arr.push_back(newNum);
-    quickSort(arr, 0, arr.size() - 1);
-
-    cout << "插入後重新排序結果: ";
-    for (int num : arr) {
-        cout << num << " ";
-    }
-    cout << endl;
-
-    return 0;
-}
-```
-
-Merge Sort 程式碼:
-
-```cpp
-#include <iostream>
-#include <vector>
-#include <random>
-using namespace std;
-
-void merge(vector<int>& arr, int l, int m, int r) {
-    int n1 = m - l + 1;
-    int n2 = r - m;
-
-    vector<int> L(n1), R(n2);
-
-    for (int i = 0; i < n1; i++)
-        L[i] = arr[l + i];
-    for (int j = 0; j < n2; j++)
-        R[j] = arr[m + 1 + j];
-
-    int i = 0, j = 0, k = l;
-    while (i < n1 && j < n2) {
-        if (L[i] <= R[j]) {
-            arr[k] = L[i];
-            i++;
-        }
-        else {
-            arr[k] = R[j];
-            j++;
-        }
-        k++;
-    }
-
-    while (i < n1) {
-        arr[k] = L[i];
-        i++;
-        k++;
-    }
-
-    while (j < n2) {
-        arr[k] = R[j];
-        j++;
-        k++;
-    }
-}
-
-void mergeSort(vector<int>& arr, int l, int r) {
-    if (l >= r)
-        return;
-    int m = l + (r - l) / 2;
-    mergeSort(arr, l, m);
-    mergeSort(arr, m + 1, r);
-    merge(arr, l, m, r);
-}
-
-int main() {
-    vector<int> arr;
-    vector<int> originalArr;
-    int numCount;
-
-    cout << "請輸入陣列大小: ";
-    cin >> numCount;
-
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(1, 100);
-
-    for (int i = 0; i < numCount; i++) {
-        int num = dis(gen);
-        arr.push_back(num);
-        originalArr.push_back(num);
-    }
-
-    cout << "未排序前: ";
-    for (int num : originalArr) {
-        cout << num << " ";
-    }
-
-    mergeSort(arr, 0, arr.size() - 1);
-
-    cout << "\n排序後: ";
-    for (int num : arr) {
-        cout << num << " ";
-    }
-    cout << endl;
-
-    int newNum;
-    cout << "請輸入要插入的數字: ";
-    cin >> newNum;
-
-    arr.push_back(newNum);
-    mergeSort(arr, 0, arr.size() - 1);
-
-    cout << "插入後重新排序結果: ";
-    for (int num : arr) {
-        cout << num << " ";
-    }
-    cout << endl;
-
-    return 0;
-}
-```
-
-Heap Sort 程式碼:
-
-```cpp
-#include <iostream>
-#include <vector>
-#include <random>
-using namespace std;
-
-void heapify(vector<int>& arr, int n, int i) {
-    int largest = i;
-    int left = 2 * i + 1;
-    int right = 2 * i + 2;
-
-    if (left < n && arr[left] > arr[largest])
-        largest = left;
-
-    if (right < n && arr[right] > arr[largest])
-        largest = right;
-
-    if (largest != i) {
-        swap(arr[i], arr[largest]);
-        heapify(arr, n, largest);
-    }
-}
-
-void heapSort(vector<int>& arr) {
-    int n = arr.size();
-
-    for (int i = n / 2 - 1; i >= 0; i--)
-        heapify(arr, n, i);
-
-    for (int i = n - 1; i > 0; i--) {
-        swap(arr[0], arr[i]);
-        heapify(arr, i, 0);
-    }
-}
-
-int main() {
-    vector<int> arr;
-    vector<int> originalArr;
-    int numCount;
-
-    cout << "請輸入陣列大小: ";
-    cin >> numCount;
-
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(1, 100);
-
-    for (int i = 0; i < numCount; i++) {
-        int num = dis(gen);
-        arr.push_back(num);
-        originalArr.push_back(num);
-    }
-
-    cout << "未排序前: ";
-    for (int num : originalArr) {
-        cout << num << " ";
-    }
-
-    heapSort(arr);
-
-    cout << "\n排序後: ";
-    for (int num : arr) {
-        cout << num << " ";
-    }
-    cout << endl;
-
-    int newNum;
-    cout << "請輸入要插入的數字: ";
-    cin >> newNum;
-
-    arr.push_back(newNum);
-    heapSort(arr);
-
-    cout << "插入後重新排序結果: ";
-    for (int num : arr) {
-        cout << num << " ";
-    }
-    cout << endl;
+    cout << endl << "Printheap Memory for debug:" << endl;
+    minHeap.PrintHeap();
 
     return 0;
 }
